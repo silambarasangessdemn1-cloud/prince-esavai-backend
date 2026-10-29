@@ -16,16 +16,55 @@ import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
-// Security HTTP headers
-app.use(helmet());
-
-// CORS configuration
+// Security HTTP headers with cross-origin resource policy enabled
 app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN || '*',
-    credentials: true,
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 );
+
+// Allowed origins list for CORS
+const allowedOrigins = [
+  'https://prince-esavai-frontend.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5001',
+];
+
+if (process.env.CORS_ORIGIN && process.env.CORS_ORIGIN !== '*') {
+  const envOrigins = process.env.CORS_ORIGIN.split(',').map((o) => o.trim().replace(/\/+$/, ''));
+  allowedOrigins.push(...envOrigins);
+}
+
+// CORS configuration supporting credentials and dynamic origin matching
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser requests (curl, Postman, cron, mobile apps)
+    if (!origin) return callback(null, true);
+
+    const cleanOrigin = origin.replace(/\/+$/, '');
+
+    // Allow explicit origins, any *.vercel.app deployment, or fallback if CORS_ORIGIN is '*'
+    if (
+      allowedOrigins.some((allowed) => allowed.replace(/\/+$/, '') === cleanOrigin) ||
+      cleanOrigin.endsWith('.vercel.app') ||
+      process.env.CORS_ORIGIN === '*'
+    ) {
+      return callback(null, true);
+    }
+
+    // Reject unapproved origins
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Body parsers
 app.use(express.json());
