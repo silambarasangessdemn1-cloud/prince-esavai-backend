@@ -10,6 +10,8 @@ import rationRoutes from './routes/rationRoutes.js';
 import drivingRoutes from './routes/drivingRoutes.js';
 import vehicleRoutes from './routes/vehicleRoutes.js';
 import farmerRoutes from './routes/farmerRoutes.js';
+import pricingRoutes from './routes/pricingRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -87,6 +89,12 @@ app.use('/api/vehicle', vehicleRoutes);
 
 // Mount Farmer & Agriculture Services Routes
 app.use('/api/farmer', farmerRoutes);
+
+// Mount Pricing Portal Routes
+app.use('/api/pricing', pricingRoutes);
+
+// Mount Payment & UTR Verification Routes
+app.use('/api/payments', paymentRoutes);
 
 // Fallback for undefined routes
 app.use(notFound);
